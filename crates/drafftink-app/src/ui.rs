@@ -328,7 +328,7 @@ impl Default for UiState {
             connection_state: ConnectionState::Disconnected,
             current_room: None,
             peer_count: 0,
-            server_url: "ws://localhost:3030/ws".to_string(),
+            server_url: "/ws".to_string(),
             room_input: String::new(),
             peers: Vec::new(),
             user_name: String::new(),
@@ -2214,7 +2214,7 @@ fn render_collaboration_modal(ctx: &Context, ui_state: &mut UiState) -> Option<U
                             ui,
                             &mut ui_state.server_url,
                             modal_width,
-                            "ws://localhost:3030/ws",
+                            "/ws",
                         );
 
                         ui.add_space(4.0);
