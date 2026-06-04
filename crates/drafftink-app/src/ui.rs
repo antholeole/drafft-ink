@@ -2210,12 +2210,7 @@ fn render_collaboration_modal(ctx: &Context, ui_state: &mut UiState) -> Option<U
                                 .strong()
                                 .color(Color32::from_gray(60)),
                         );
-                        input_text(
-                            ui,
-                            &mut ui_state.server_url,
-                            modal_width,
-                            "/ws",
-                        );
+                        input_text(ui, &mut ui_state.server_url, modal_width, "/ws");
 
                         ui.add_space(4.0);
 

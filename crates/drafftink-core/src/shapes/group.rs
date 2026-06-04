@@ -1,6 +1,6 @@
 //! Group shape for combining multiple shapes.
 
-use super::{Shape, ShapeId, ShapeStyle, ShapeTrait};
+use super::{SerializableColor, Shape, ShapeId, ShapeStyle, ShapeTrait};
 use kurbo::{Affine, BezPath, Point, Rect};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -187,8 +187,10 @@ mod tests {
 
     #[test]
     fn test_group_hit_test() {
-        let rect1 = Rectangle::new(Point::new(0.0, 0.0), 100.0, 50.0);
-        let rect2 = Rectangle::new(Point::new(200.0, 200.0), 50.0, 100.0);
+        let mut rect1 = Rectangle::new(Point::new(0.0, 0.0), 100.0, 50.0);
+        rect1.style.fill_color = Some(SerializableColor::black());
+        let mut rect2 = Rectangle::new(Point::new(200.0, 200.0), 50.0, 100.0);
+        rect2.style.fill_color = Some(SerializableColor::black());
 
         let group = Group::new(vec![Shape::Rectangle(rect1), Shape::Rectangle(rect2)]);
 
@@ -202,8 +204,10 @@ mod tests {
 
     #[test]
     fn test_nested_groups() {
-        let rect1 = Rectangle::new(Point::new(0.0, 0.0), 100.0, 50.0);
-        let rect2 = Rectangle::new(Point::new(200.0, 200.0), 50.0, 100.0);
+        let mut rect1 = Rectangle::new(Point::new(0.0, 0.0), 100.0, 50.0);
+        rect1.style.fill_color = Some(SerializableColor::black());
+        let mut rect2 = Rectangle::new(Point::new(200.0, 200.0), 50.0, 100.0);
+        rect2.style.fill_color = Some(SerializableColor::black());
 
         let inner_group = Group::new(vec![Shape::Rectangle(rect1)]);
         let outer_group = Group::new(vec![Shape::Group(inner_group), Shape::Rectangle(rect2)]);

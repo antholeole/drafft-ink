@@ -1,6 +1,6 @@
 //! Ellipse shape.
 
-use super::{ShapeId, ShapeStyle, ShapeTrait};
+use super::{SerializableColor, ShapeId, ShapeStyle, ShapeTrait};
 use kurbo::{Affine, BezPath, Ellipse as KurboEllipse, Point, Rect, Shape as KurboShape};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -150,7 +150,8 @@ mod tests {
 
     #[test]
     fn test_hit_test_center() {
-        let ellipse = Ellipse::new(Point::new(50.0, 50.0), 30.0, 20.0);
+        let mut ellipse = Ellipse::new(Point::new(50.0, 50.0), 30.0, 20.0);
+        ellipse.style.fill_color = Some(SerializableColor::black());
         assert!(ellipse.hit_test(Point::new(50.0, 50.0), 0.0));
     }
 

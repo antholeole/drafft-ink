@@ -946,7 +946,7 @@ fn parse_excalidraw_color(color: &str) -> crate::shapes::SerializableColor {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::shapes::{Rectangle, ShapeTrait};
+    use crate::shapes::{Rectangle, SerializableColor, ShapeTrait};
 
     #[test]
     fn test_document_creation() {
@@ -1001,8 +1001,10 @@ mod tests {
     #[test]
     fn test_shapes_at_point() {
         let mut doc = CanvasDocument::new();
-        let rect1 = Rectangle::new(Point::new(0.0, 0.0), 100.0, 100.0);
-        let rect2 = Rectangle::new(Point::new(50.0, 50.0), 100.0, 100.0);
+        let mut rect1 = Rectangle::new(Point::new(0.0, 0.0), 100.0, 100.0);
+        rect1.style.fill_color = Some(SerializableColor::black());
+        let mut rect2 = Rectangle::new(Point::new(50.0, 50.0), 100.0, 100.0);
+        rect2.style.fill_color = Some(SerializableColor::black());
         let id1 = rect1.id();
         let id2 = rect2.id();
 

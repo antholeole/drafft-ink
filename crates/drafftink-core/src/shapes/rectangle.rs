@@ -1,6 +1,6 @@
 //! Rectangle shape.
 
-use super::{ShapeId, ShapeStyle, ShapeTrait};
+use super::{SerializableColor, ShapeId, ShapeStyle, ShapeTrait};
 use kurbo::{Affine, BezPath, Point, Rect, RoundedRect, Shape as KurboShape};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -170,7 +170,8 @@ mod tests {
 
     #[test]
     fn test_hit_test() {
-        let rect = Rectangle::new(Point::new(0.0, 0.0), 100.0, 100.0);
+        let mut rect = Rectangle::new(Point::new(0.0, 0.0), 100.0, 100.0);
+        rect.style.fill_color = Some(SerializableColor::black());
         assert!(rect.hit_test(Point::new(50.0, 50.0), 0.0));
         assert!(!rect.hit_test(Point::new(150.0, 50.0), 0.0));
         assert!(rect.hit_test(Point::new(105.0, 50.0), 10.0)); // Within tolerance
