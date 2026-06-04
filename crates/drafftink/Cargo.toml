@@ -1,7 +1,7 @@
 [package]
 name = "drafftink"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
 license = "AGPL-3.0"
 description = "DrafftInk - Collaborative whiteboard application (placeholder crate)"
 repository = "https://github.com/patwie/drafft-ink"
