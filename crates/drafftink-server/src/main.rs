@@ -241,6 +241,7 @@ async fn handle_socket(socket: WebSocket, state: Arc<AppState>) {
             msg = receiver.next() => {
                 match msg {
                     Some(Ok(Message::Text(text))) => {
+                        tracing::debug!("received from {}: {}", peer_id, &text[..text.len().min(200)]);
                         match serde_json::from_str::<ClientMessage>(&text) {
                             Ok(client_msg) => {
                                 match client_msg {
@@ -264,7 +265,9 @@ async fn handle_socket(socket: WebSocket, state: Arc<AppState>) {
                                             peer_count,
                                             initial_sync,
                                         };
-                                        if sender.send(Message::Text(serde_json::to_string(&joined).unwrap().into())).await.is_err() {
+                                        let joined_json = serde_json::to_string(&joined).unwrap();
+                                        tracing::debug!("sending joined to {}: {}", peer_id, joined_json);
+                                        if sender.send(Message::Text(joined_json.into())).await.is_err() {
                                             break;
                                         }
 

@@ -2236,6 +2236,12 @@ fn render_collaboration_modal(ctx: &Context, ui_state: &mut UiState) -> Option<U
                         });
 
                         // Room controls (only when connected)
+                        if ui_state.connection_state != ConnectionState::Connected {
+                            log::debug!(
+                                "Join room button not shown — connection state is {:?}",
+                                ui_state.connection_state
+                            );
+                        }
                         if ui_state.connection_state == ConnectionState::Connected {
                             ui.add_space(4.0);
                             ui.separator();
@@ -2274,6 +2280,7 @@ fn render_collaboration_modal(ctx: &Context, ui_state: &mut UiState) -> Option<U
                                 .min_size(Vec2::new(modal_width, 36.0))
                                 .corner_radius(CornerRadius::same(6));
                                 if ui.add(join_btn).clicked() {
+                                    log::debug!("Join room button clicked, room='{}'", ui_state.room_input);
                                     action = Some(UiAction::JoinRoom(ui_state.room_input.clone()));
                                 }
                             }

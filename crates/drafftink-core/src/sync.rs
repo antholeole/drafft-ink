@@ -451,8 +451,8 @@ mod native_client {
                         log::info!("WebSocket connected, status: {}", response.status());
                         let _ = event_tx.send(SyncEvent::Connected);
 
-                        // Set read timeout on the underlying TCP stream for non-blocking behavior
-                        // This is more reliable for tunneled/forwarded connections
+                        // Set read timeout on the underlying TCP stream so the loop
+                        // can interleave send-command checks with reads.
                         {
                             let stream = socket.get_mut();
                             match stream {
@@ -460,12 +460,13 @@ mod native_client {
                                     let _ = tcp.set_read_timeout(Some(Duration::from_millis(50)));
                                     let _ = tcp.set_write_timeout(Some(Duration::from_secs(5)));
                                 }
-                                #[allow(unreachable_patterns)]
+                                tungstenite::stream::MaybeTlsStream::NativeTls(tls) => {
+                                    let tcp = tls.get_ref();
+                                    let _ = tcp.set_read_timeout(Some(Duration::from_millis(50)));
+                                    let _ = tcp.set_write_timeout(Some(Duration::from_secs(5)));
+                                }
                                 _ => {
-                                    // For TLS streams, we'll rely on WouldBlock/TimedOut errors
-                                    log::debug!(
-                                        "TLS or other stream - using default timeout handling"
-                                    );
+                                    log::warn!("unrecognised stream type — send commands may be delayed until server sends data");
                                 }
                             }
                         }
