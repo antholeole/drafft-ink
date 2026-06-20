@@ -617,7 +617,7 @@ impl VelloRenderer {
                         generate_fill_pattern(style.fill_pattern, bounds, style.stroke_width, seed);
 
                     // Clip pattern to shape boundary
-                    self.scene.push_clip_layer(transform, &fill_path);
+                    self.scene.push_clip_layer(Fill::NonZero, transform, &fill_path);
                     let pattern_stroke = Stroke::new(style.stroke_width * 0.5);
                     self.scene
                         .stroke(&pattern_stroke, transform, fill_color, None, &pattern_path);
@@ -1062,7 +1062,7 @@ impl VelloRenderer {
             * Affine::translate((bounds.x0, bounds.y0))
             * Affine::scale_non_uniform(scale_x, scale_y);
 
-        self.scene.draw_image(&image_data.into(), image_transform);
+        self.scene.draw_image(&image_data, image_transform);
     }
 
     /// Render a placeholder for images that couldn't be loaded.

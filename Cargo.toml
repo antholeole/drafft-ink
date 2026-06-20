@@ -17,23 +17,23 @@ rust-version = "1.86"
 
 [workspace.dependencies]
 # Geometry and color primitives (match vello master requirements)
-kurbo = { version = "0.12", features = ["serde"] }
-peniko = "0.5"
+kurbo = { version = "0.13", features = ["serde"] }
+peniko = "0.6"
 
-# Rendering - use git master for wgpu 27 compatibility
-vello = "0.6.0"
+# Rendering - use git master for wgpu 29 compatibility
+vello = { git = "https://github.com/linebender/vello", rev = "dd9a6cce233a09fd5fff3678b3fff49675a7767d" }
 roughr = "0.12"
 rough_vello = "0.13"
 
 # Windowing and GPU
 winit = "0.30"
-wgpu = "27"  # Match vello master and egui 0.33
+wgpu = "29"  # Match vello master and egui 0.34
 
 # UI
-egui = "0.33"
-egui-wgpu = "0.33"
-egui-winit = { version = "0.33", default-features = false }
-egui_extras = { version = "0.33", features = ["svg"] }
+egui = "0.34"
+egui-wgpu = "0.34"
+egui-winit = { version = "0.34", default-features = false }
+egui_extras = { version = "0.34", features = ["svg"] }
 
 # Async
 pollster = "0.4"
@@ -79,8 +79,3 @@ codegen-units = 1
 inherits = "release"
 opt-level = "z"
 lto = true
-
-[patch.crates-io]
-# Use vello from git until a new version with wgpu 27 support is published to crates.io
-# Current vello 0.6.0 uses wgpu 26, but egui 0.33 requires wgpu 27
-vello = { git = "https://github.com/linebender/vello", rev = "1771112ebc0ae04d996ebf493d3a00d73303f014" }

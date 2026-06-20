@@ -1,6 +1,6 @@
 //! Group shape for combining multiple shapes.
 
-use super::{SerializableColor, Shape, ShapeId, ShapeStyle, ShapeTrait};
+use super::{Shape, ShapeId, ShapeStyle, ShapeTrait};
 use kurbo::{Affine, BezPath, Point, Rect};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -159,7 +159,7 @@ impl ShapeTrait for Group {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::shapes::Rectangle;
+    use crate::shapes::{Rectangle, SerializableColor};
 
     #[test]
     fn test_group_creation() {

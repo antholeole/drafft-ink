@@ -1,6 +1,6 @@
 //! Rectangle shape.
 
-use super::{SerializableColor, ShapeId, ShapeStyle, ShapeTrait};
+use super::{ShapeId, ShapeStyle, ShapeTrait};
 use kurbo::{Affine, BezPath, Point, Rect, RoundedRect, Shape as KurboShape};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -149,6 +149,7 @@ impl ShapeTrait for Rectangle {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::shapes::SerializableColor;
 
     #[test]
     fn test_rectangle_creation() {

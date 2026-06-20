@@ -1,6 +1,6 @@
 //! Ellipse shape.
 
-use super::{SerializableColor, ShapeId, ShapeStyle, ShapeTrait};
+use super::{ShapeId, ShapeStyle, ShapeTrait};
 use kurbo::{Affine, BezPath, Ellipse as KurboEllipse, Point, Rect, Shape as KurboShape};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -133,6 +133,7 @@ impl ShapeTrait for Ellipse {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::shapes::SerializableColor;
 
     #[test]
     fn test_ellipse_creation() {

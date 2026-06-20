@@ -50,8 +50,7 @@ pub fn input_text(ui: &mut Ui, text: &mut String, width: f32, hint: &str) -> egu
                 .desired_width(width)
                 .text_color(Color32::from_gray(30))
                 .background_color(Color32::WHITE)
-                .hint_text(hint)
-                .frame(true),
+                .hint_text(hint),
         )
     })
     .inner

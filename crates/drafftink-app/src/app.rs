@@ -2024,9 +2024,9 @@ impl ApplicationHandler for App {
         // If egui wants this event exclusively, don't process it for canvas
         // Check both: if egui consumed the event OR if the pointer is over an egui area
         let egui_wants_input = egui_response.consumed
-            || state.egui_ctx.is_pointer_over_area()
-            || state.egui_ctx.wants_pointer_input()
-            || state.egui_ctx.wants_keyboard_input();
+            || state.egui_ctx.is_pointer_over_egui()
+            || state.egui_ctx.egui_wants_pointer_input()
+            || state.egui_ctx.egui_wants_keyboard_input();
 
         match event {
             WindowEvent::CloseRequested => {
@@ -2377,7 +2377,7 @@ impl ApplicationHandler for App {
                 let egui_input = state.egui_state.take_egui_input(&state.window);
                 let mut deferred_action: Option<UiAction> = None;
                 let mut ui_action_taken = false;
-                let egui_output = state.egui_ctx.run(egui_input, |ctx| {
+                let egui_output = state.egui_ctx.run_ui(egui_input, |ctx| {
                     if let Some(action) = render_ui(ctx, &mut state.ui_state, &selected_props) {
                         ui_action_taken = true;
                         match action.clone() {
@@ -3690,8 +3690,9 @@ impl ApplicationHandler for App {
                 let queue = &device_handle.queue;
 
                 let surface_texture = match state.surface.surface.get_current_texture() {
-                    Ok(t) => t,
-                    Err(e) => {
+                    vello::wgpu::CurrentSurfaceTexture::Success(t) => t,
+                    vello::wgpu::CurrentSurfaceTexture::Suboptimal(t) => t,
+                    e => {
                         log::warn!("Failed to get surface texture: {:?}", e);
                         return;
                     }
@@ -3807,6 +3808,7 @@ impl ApplicationHandler for App {
                             depth_stencil_attachment: None,
                             timestamp_writes: None,
                             occlusion_query_set: None,
+                            multiview_mask: None,
                         });
 
                     // Use forget_lifetime to satisfy egui-wgpu's 'static requirement
