@@ -133,5 +133,5 @@ pub async fn run_wasm() {
     }
 
     // Run the app
-    crate::App::run().await;
+    crate::App::run(None, None).await;
 }

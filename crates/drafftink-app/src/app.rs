@@ -1538,6 +1538,8 @@ pub struct App {
     /// Flag to indicate async init is in progress
     #[cfg(target_arch = "wasm32")]
     init_in_progress: std::cell::Cell<bool>,
+    startup_server: Option<String>,
+    startup_room: Option<String>,
 }
 
 impl App {
@@ -1555,13 +1557,17 @@ impl App {
             pending_window: None,
             #[cfg(target_arch = "wasm32")]
             init_in_progress: std::cell::Cell::new(false),
+            startup_server: None,
+            startup_room: None,
         }
     }
 
     /// Run the application.
-    pub async fn run() {
+    pub async fn run(server: Option<String>, room: Option<String>) {
         let event_loop = EventLoop::new().expect("Failed to create event loop");
-        let app = App::new();
+        let mut app = App::new();
+        app.startup_server = server;
+        app.startup_room = room;
 
         #[cfg(target_arch = "wasm32")]
         {
@@ -1571,7 +1577,6 @@ impl App {
 
         #[cfg(not(target_arch = "wasm32"))]
         {
-            let mut app = app;
             event_loop.run_app(&mut app).expect("Event loop error");
         }
     }
@@ -1673,14 +1678,65 @@ impl App {
             file_ops::setup_drag_drop_handlers(vw, vh, cox, coy, cz);
         }
 
+        // Pre-populate UI fields from startup args (native only)
+        #[cfg(not(target_arch = "wasm32"))]
+        if let Some(ref mut state) = self.state {
+            if let Some(ref server) = self.startup_server {
+                state.ui_state.server_url = server.clone();
+            }
+            if let Some(ref room) = self.startup_room {
+                state.ui_state.room_input = room.clone();
+            }
+        }
+
         // Auto-join room from URL if specified (WASM only)
         #[cfg(target_arch = "wasm32")]
         {
             self.try_auto_join_room();
         }
 
+        // Auto-connect (and optionally join room) from startup args (native only)
+        #[cfg(not(target_arch = "wasm32"))]
+        if self.startup_server.is_some() {
+            self.try_auto_join_room_native();
+        }
+
         // Request initial redraw
         window.request_redraw();
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    fn try_auto_join_room_native(&mut self) {
+        use drafftink_core::sync::ConnectionState;
+
+        let server_url = match self.startup_server.clone() {
+            Some(s) => s,
+            None => return,
+        };
+        let room = self.startup_room.clone();
+        let state = match self.state.as_mut() {
+            Some(s) => s,
+            None => return,
+        };
+
+        log::info!("Auto-connecting to {}", server_url);
+
+        let mut ws = drafftink_core::sync::NativeWebSocket::new();
+        match ws.connect(&server_url) {
+            Ok(()) => {
+                log::info!("WebSocket connecting to {}", server_url);
+                state.websocket = Some(ws);
+                state.ui_state.connection_state = ConnectionState::Connecting;
+                if let Some(r) = room {
+                    log::info!("Queuing auto-join for room '{}'", r);
+                    state.collab.join_room(&r);
+                }
+            }
+            Err(e) => {
+                log::error!("WebSocket connect failed: {}", e);
+                state.ui_state.connection_state = ConnectionState::Error;
+            }
+        }
     }
 
     /// Try to auto-join a room from URL parameters (WASM only).
@@ -1689,11 +1745,21 @@ impl App {
         use crate::web::{get_server_url, get_url_params};
         use drafftink_core::sync::ConnectionState;
 
+        // DRAFFTINK_DEFAULT_ROOM and DRAFFTINK_DEFAULT_SERVER are baked in at
+        // compile time (option_env!). Set them in the build environment to
+        // pre-populate room/server without URL params. URL params always win.
+        // Consumers: overrideAttrs { DRAFFTINK_DEFAULT_SERVER = "wss://..."; }
+        const DEFAULT_ROOM: Option<&str> = option_env!("DRAFFTINK_DEFAULT_ROOM");
+        const DEFAULT_SERVER: Option<&str> = option_env!("DRAFFTINK_DEFAULT_SERVER");
+
         let params = get_url_params();
 
-        let room = match params.room {
+        let room = match params.room.or_else(|| DEFAULT_ROOM.map(str::to_string)) {
             Some(r) => r,
-            None => return,
+            None => {
+                log::info!("DRAFFTINK_DEFAULT_ROOM not set and no ?room= param — not auto-joining");
+                return;
+            }
         };
 
         let state = match self.state.as_mut() {
@@ -1701,9 +1767,13 @@ impl App {
             None => return,
         };
 
-        // Get server URL from params or origin
-        let server_url = get_server_url(params.server.as_deref())
+        // Get server URL from params, compile-time default, or page origin
+        let server_url = get_server_url(params.server.as_deref().or(DEFAULT_SERVER))
             .unwrap_or_else(|| state.ui_state.server_url.clone());
+
+        if DEFAULT_SERVER.is_none() && params.server.is_none() {
+            log::info!("DRAFFTINK_DEFAULT_SERVER not set — falling back to page origin: {}", server_url);
+        }
 
         log::info!("Auto-joining room '{}' via {}", room, server_url);
 
@@ -2858,13 +2928,23 @@ impl ApplicationHandler for App {
                                 state.ui_state.current_room = None;
                             }
                             UiAction::JoinRoom(room) => {
-                                log::info!("Join room requested: {}", room);
+                                log::info!("Join room requested: '{}'", room);
+                                log::info!(
+                                    "WebSocket state: {}",
+                                    if state.websocket.is_some() { "connected" } else { "none" }
+                                );
                                 state.collab.join_room(&room);
-                                // Send queued messages
+                                let outgoing = state.collab.take_outgoing();
+                                log::info!("Queued {} outgoing message(s) for room join", outgoing.len());
                                 if let Some(ref ws) = state.websocket {
-                                    for msg in state.collab.take_outgoing() {
-                                        let _ = ws.send(&msg);
+                                    for msg in outgoing {
+                                        match ws.send(&msg) {
+                                            Ok(()) => log::info!("Sent join message ({} bytes)", msg.len()),
+                                            Err(e) => log::error!("Failed to send join message: {}", e),
+                                        }
                                     }
+                                } else {
+                                    log::warn!("No WebSocket — join messages dropped");
                                 }
                             }
                             UiAction::LeaveRoom => {
